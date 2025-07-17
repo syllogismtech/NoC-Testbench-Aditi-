@@ -22,22 +22,31 @@ class noc_env extends uvm_env;
     foreach (master_agents[i]) begin
       uvm_config_db#(axi_agent_config)::set(this, $sformatf("master_agents[%0d]", i), "cfg", cfg.master_cfg[i]);
       master_agents[i] = axi_agent::type_id::create($sformatf("master_agents[%0d]", i), this);
+  // active/passive checking
+      if (cfg.master_cfg[i].is_active)
+        `uvm_info("ENV", $sformatf("Master agent %0d: ACTIVE", i), UVM_LOW)
+      else
+        `uvm_info("ENV", $sformatf("Master agent %0d: PASSIVE", i), UVM_LOW)
     end
 
     slave_agents = new[cfg.num_slaves];
     foreach (slave_agents[i]) begin
       uvm_config_db#(axi_agent_config)::set(this, $sformatf("slave_agents[%0d]", i), "cfg", cfg.slave_cfg[i]);
       slave_agents[i] = axi_agent::type_id::create($sformatf("slave_agents[%0d]", i), this);
+      // active/passive checking
+      if (cfg.slave_cfg[i].is_active)
+        `uvm_info("ENV", $sformatf("Slave agent %0d: ACTIVE", i), UVM_LOW)
+      else
+        `uvm_info("ENV", $sformatf("Slave agent %0d: PASSIVE", i), UVM_LOW)
     end
 
     sb = noc_scoreboard::type_id::create("sb", this);
-
     vseqr = noc_virtual_sequencer::type_id::create("vseqr", this);
   endfunction
 
   function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
-
+    
     foreach (master_agents[i]) begin
       vseqr.master_seqrs.push_back(master_agents[i].m_seqr); // pushing master agents to virtual sequencer so that vseqr can control all of the masters 
     end
